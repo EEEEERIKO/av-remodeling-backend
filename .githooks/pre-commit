@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pre-commit hook to prevent committing common secret patterns.
+# Scans staged files for patterns like private keys or env var names.
+
+PATTERNS=(
+  "SUPABASE_SERVICE_ROLE_KEY"
+  "NEXT_PUBLIC_SUPABASE"
+  "AWS_SECRET_ACCESS_KEY"
+  "AWS_ACCESS_KEY_ID"
+  "-----BEGIN PRIVATE KEY-----"
+  "-----BEGIN RSA PRIVATE KEY-----"
+  "PRIVATE_KEY="
+  "PASSWORD="
+)
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+EXIT_CODE=0
+echo "[pre-commit] scanning staged files for secrets..."
+for file in $STAGED_FILES; do
+  # skip binary files
+  if git diff --cached --numstat -- "$file" | awk '{print $1+$2}' | grep -qE '^[0-9]'; then
+    :
+  fi
+  for pat in "${PATTERNS[@]}"; do
+    if git show :"$file" | grep -n --color=never -E "$pat" >/dev/null 2>&1; then
+      echo "ERROR: Potential secret found in staged file '$file' (pattern: $pat)"
+      git show :"$file" | grep -n --color=never -E "$pat" || true
+      EXIT_CODE=1
+    fi
+  done
+done
+
+if [ "$EXIT_CODE" -ne 0 ]; then
+  echo "Aborting commit. Remove secrets from staged files or add them to .gitignore." >&2
+  exit 1
+fi
+
+echo "pre-commit check passed."
+exit 0
