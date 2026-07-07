@@ -1,7 +1,116 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
+const frontendUrl = process.env.FRONTEND_URL;
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": frontendUrl || "",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Accept",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(),
+  });
+}
+
+
+export async function GET(request: NextRequest) {
+  const session = request.cookies.get("admin-session");
+
+    if (
+      !session ||
+      session.value !== "authenticated"
+    ) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      {
+        status: 401,
+        headers: corsHeaders(),
+      }
+    );
+  }
+
+  try {
+    if (!supabase) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Supabase is not configured.",
+        },
+        {
+          status: 500,
+          headers: corsHeaders(),
+        }
+      );
+    }
+
+    const contactsTable =
+      process.env.SUPABASE_CONTACTS_TABLE || "contacts";
+
+
+    const { data, error } = await supabase
+      .from(contactsTable)
+      .select("*")
+      .order("created_at", {
+        ascending: false,
+      });
+
+
+    if (error) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unable to fetch contacts.",
+          error: error.message,
+        },
+        {
+          status: 500,
+          headers: corsHeaders(),
+        }
+      );
+    }
+
+
+    return NextResponse.json(
+      {
+        success: true,
+        data,
+      },
+      {
+        status: 200,
+        headers: corsHeaders(),
+      }
+    );
+
+
+  } catch (error) {
+
+    console.error("GET contacts error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unexpected error",
+      },
+      {
+        status: 500,
+        headers: corsHeaders(),
+      }
+    );
+
+  }
+}
 const contactsTable = process.env.SUPABASE_CONTACTS_TABLE || 'contacts';
 
 const contactSchema = z.object({
@@ -51,7 +160,9 @@ export async function POST(request: Request) {
           success: false,
           message: 'Content-Type must be multipart/form-data.',
         },
-        { status: 400 }
+        { status: 400,
+          headers: corsHeaders()
+         }
       );
     }
 
@@ -66,7 +177,10 @@ export async function POST(request: Request) {
           message: 'Validation failed.',
           errors: parsed.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        { status: 400, 
+          headers: corsHeaders()
+
+         }
       );
     }
 
@@ -76,7 +190,10 @@ export async function POST(request: Request) {
           success: false,
           message: 'Supabase is not configured.',
         },
-        { status: 500 }
+        { status: 500,
+          headers: corsHeaders()
+
+         }
       );
     }
 
@@ -101,10 +218,11 @@ export async function POST(request: Request) {
         {
           success: false,
           message: 'Unable to save contact request at this time.',
-          error: error.message,
-          details: error.details,
         },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: corsHeaders()
+        }
       );
     }
 
@@ -113,7 +231,10 @@ export async function POST(request: Request) {
         success: true,
         message: 'Contact request submitted successfully.',
       },
-      { status: 201 }
+      { 
+        status: 201,
+        headers: corsHeaders()
+      }
     );
   } catch (error) {
     console.error('Contact route error:', error);
@@ -122,7 +243,9 @@ export async function POST(request: Request) {
         success: false,
         message: 'An unexpected error occurred.',
       },
-      { status: 500 }
+      { status: 500,
+        headers: corsHeaders()
+       }
     );
   }
 }
