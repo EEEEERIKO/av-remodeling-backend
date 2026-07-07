@@ -2,8 +2,11 @@ import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
+import { EmailTemplate } from "@/components/email-template";
 
 const frontendUrl = process.env.FRONTEND_URL;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function corsHeaders() {
   return {
@@ -68,6 +71,8 @@ export async function GET(request: NextRequest) {
 
 
     if (error) {
+      
+      
       return NextResponse.json(
         {
           success: false,
@@ -224,6 +229,180 @@ export async function POST(request: Request) {
           headers: corsHeaders()
         }
       );
+    }
+
+    try {
+      await resend.emails.send({
+        from: "AV Remodeling <onboarding@resend.dev>",
+        to: ["erikovc.dev@gmail.com"],
+        subject: `🚨 New Lead - ${payload.full_name} | AV Remodeling`,
+
+        html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="
+            margin:0;
+            padding:40px;
+            background:#050505;
+            font-family:Arial,Helvetica,sans-serif;
+            color:#dfe3ea;
+        ">
+
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td align="center">
+
+                        <table
+                            width="700"
+                            cellpadding="0"
+                            cellspacing="0"
+                            style="
+                                background:#171c22;
+                                border:1px solid #3f4852;
+                                border-radius:20px;
+                                padding:35px;
+                            "
+                        >
+
+                            <tr>
+                                <td>
+
+                                    <h1 style="
+                                        color:#02C7FF;
+                                        margin:0 0 12px;
+                                        font-size:30px;
+                                    ">
+                                        🚨 New AV Remodeling Request
+                                    </h1>
+
+                                    <p style="margin-top:0;color:#c7d0d8;">
+                                        You received a new project request from your website.
+                                    </p>
+
+                                    <hr style="
+                                        border:none;
+                                        border-top:1px solid #3f4852;
+                                        margin:30px 0;
+                                    ">
+
+                                    <h2 style="color:white;">
+                                        👤 Client Information
+                                    </h2>
+
+                                    <table width="100%" cellpadding="10">
+
+                                        <tr>
+                                            <td><strong>🧑 Name</strong></td>
+                                            <td>${payload.full_name}</td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><strong>📞 Phone</strong></td>
+                                            <td>${payload.phone}</td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><strong>📧 Email</strong></td>
+                                            <td>${payload.email}</td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><strong>📍 Address</strong></td>
+                                            <td>${payload.address || "Not provided"}</td>
+                                        </tr>
+
+                                    </table>
+
+                                    <hr style="
+                                        border:none;
+                                        border-top:1px solid #3f4852;
+                                        margin:30px 0;
+                                    ">
+
+                                    <h2 style="color:white;">
+                                        🏠 Project Details
+                                    </h2>
+
+                                    <table width="100%" cellpadding="10">
+
+                                        <tr>
+                                            <td><strong>🛠 Areas</strong></td>
+                                            <td>${payload.areas.join(", ")}</td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><strong>🏗 Property Type</strong></td>
+                                            <td>${payload.property_type || "Not provided"}</td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><strong>💰 Budget</strong></td>
+                                            <td>${payload.budget || "Not provided"}</td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><strong>⏳ Timeline</strong></td>
+                                            <td>${payload.timeline || "Not provided"}</td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><strong>🤝 Referral</strong></td>
+                                            <td>${payload.referral || "Not provided"}</td>
+                                        </tr>
+
+                                    </table>
+
+                                    <h3 style="
+                                        color:white;
+                                        margin-top:35px;
+                                    ">
+                                        📝 Project Description
+                                    </h3>
+
+                                    <div style="
+                                        background:#202831;
+                                        padding:18px;
+                                        border-radius:12px;
+                                        line-height:1.7;
+                                    ">
+                                        ${payload.description || "No description provided"}
+                                    </div>
+
+                                    <div style="margin-top:40px;text-align:center;">
+
+                                        <a
+                                            href="${process.env.FRONTEND_URL}/data"
+                                            style="
+                                                display:inline-block;
+                                                padding:15px 28px;
+                                                background:#02C7FF;
+                                                color:#050505;
+                                                text-decoration:none;
+                                                font-weight:bold;
+                                                border-radius:999px;
+                                            "
+                                        >
+                                            📊 Open Client Dashboard
+                                        </a>
+
+                                    </div>
+
+                                </td>
+                            </tr>
+
+                        </table>
+
+                    </td>
+                </tr>
+            </table>
+
+        </body>
+        </html>
+        `,
+      });
+
+    } catch(emailError) {
+      console.error("Resend error:", emailError);
     }
 
     return NextResponse.json(
