@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-  const frontendUrl = process.env.FRONTEND_URL;
+const frontendUrl = process.env.FRONTEND_URL || "";
 
   function corsHeaders() {
   return {
@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
-    // headers: corsHeaders()
+      headers: corsHeaders()
   });
 }
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         },
         {
           status: 401,
-        //   headers: corsHeaders()
+           headers: corsHeaders()
         }
       );
     }
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 200,
-        // headers: corsHeaders()
+        headers: corsHeaders()
       }
     );
 
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 500,
-        //headers: corsHeaders()
+        headers: corsHeaders()
       }
     );
   }
