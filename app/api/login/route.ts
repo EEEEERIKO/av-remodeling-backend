@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });
+    console.log(response.cookies.getAll());
 
     return response;
 
