@@ -12,6 +12,7 @@ function corsHeaders() {
 export async function GET(request: NextRequest) {
 
   const session = request.cookies.get("admin-session");
+      console.log("COOKIE:", session);
 
   if (
     !session ||
