@@ -234,7 +234,7 @@ export async function POST(request: Request) {
     try {
       await resend.emails.send({
         from: "AV Remodeling <onboarding@resend.dev>",
-        to: ["erikovc.dev@gmail.com"],
+        to: ["avremodeling37@gmail.com"],
         subject: `🚨 New Lead - ${payload.full_name} | AV Remodeling`,
 
         html: `

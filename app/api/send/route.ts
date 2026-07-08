@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       from: "AV Remodeling <onboarding@resend.dev>",
 
       to: [
-        "erikovc.dev@gmail.com"
+        "avremodeling37@gmail.com"
       ],
 
       subject: `🚨 New Lead - ${fullName} | AV Remodeling`,
