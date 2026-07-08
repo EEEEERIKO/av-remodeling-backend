@@ -27,7 +27,6 @@ export async function OPTIONS() {
 
 export async function GET(request: NextRequest) {
   const session = request.cookies.get("admin-session");
-    console.log("COOKIE Conttact:", session);
 
     if (
       !session ||
